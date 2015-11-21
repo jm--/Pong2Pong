@@ -6,7 +6,6 @@ package edu.pdx.pong2pong;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.graphics.PointF;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
@@ -18,13 +17,8 @@ import android.view.View;
 public class GameView extends SurfaceView
         implements SurfaceHolder.Callback {
 
-    /** ball velocity x */
-    float mVx;
-    /** ball velocity y */
-    float mVy;
-
-    float[] mX = new float[3];
-    float[] mY = new float[3];
+    Ball mBall;
+    Paddle[] mPaddle;
 
     /** the width of the screen (max x) */
     int mScreenW;
@@ -34,8 +28,6 @@ public class GameView extends SurfaceView
 
     /** The thread that actually draws the animation */
     private final GameThread mThread;
-
-    //private PointF paddle[] = {new PointF(10,10), new PointF(200, 10)};
 
     public GameView(Context context) {
         this(context, null);
@@ -70,22 +62,19 @@ public class GameView extends SurfaceView
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        mX[0] = mY[0] = 10;
-        mVx = 20;
-        mVy = 10;
-        mX[1] = 5;
-        mY[1] = mScreenH / 2;
-        mX[2] = mScreenW - 30;
-        mY[2] = mScreenH / 2;
+
+        mBall = new Ball(mScreenW, mScreenH);
+        mPaddle = new Paddle[] {
+                new Paddle(20, mScreenH / 2),
+                new Paddle(mScreenW - 20, mScreenH / 2)
+        };
 
         mThread.start();
-        Log.d("JM", "surfaceCreated");
-
     }
 
     @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-        //Log.d("JM", "surfaceChanged" + width + " " + height);
+
     }
 
     @Override
@@ -111,10 +100,10 @@ public class GameView extends SurfaceView
         float y = event.getY();
         if (x < mScreenW / 2) {
             //left paddle
-            mY[1] = y;
+            mPaddle[0].setY(y);
         } else {
             //right paddle
-            mY[2] = y;
+            mPaddle[1].setY(y);
         }
         return true;
     }
@@ -149,20 +138,16 @@ public class GameView extends SurfaceView
                 Canvas c = mHolder.lockCanvas();
                 doDraw(c);
                 mHolder.unlockCanvasAndPost(c);
-                mX[0] += mVx;
-                mY[0] += mVy;
+                mBall.move(mPaddle[0], mPaddle[1]);
             }
         }
 
 
         private void doDraw (Canvas c) {
-            Paint p = new Paint();
-
-            c.drawARGB(255, 150,150,0); //background
-            //c.drawBitmap(ball, x - ball.getWidth()/2, y - ball.getHeight()/2, null);
-            c.drawCircle(mX[0], mY[0], 10, p);
-            c.drawRect(mX[1], mY[1], mX[1]+20, mY[1]+200, p);
-            c.drawRect(mX[2], mY[2], mX[2]+20, mY[2]+200, p);
+            c.drawARGB(255, 150, 150, 0); //background
+            mBall.draw(c);
+            mPaddle[0].draw(c);
+            mPaddle[1].draw(c);
         }
     }
 }
