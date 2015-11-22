@@ -2,12 +2,15 @@ package edu.pdx.pong2pong;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.graphics.Rect;
 
 public class Paddle {
-    /** current x coordinate of the paddle */
+    /** current x coordinate of the paddle center */
     float mX;
-    /** current y coordinate of the paddle */
+    /** current y coordinate of the paddle center */
     float mY;
+
+
     /** the width of the paddle */
     final static int w = 20;
     /** the height of the paddle */
@@ -26,6 +29,20 @@ public class Paddle {
 
     public void setY(float y) {
         mY = y;
+    }
+
+    /**
+     * If the center of the ball is inside this rect area, then the ball is hitting this paddle.
+     * @param radius the radius of the ball
+     * @return
+     */
+    public Rect getSpace(int radius) {
+        return new Rect(
+                (int)mX - half_w - radius,
+                (int)mY - half_h - radius,
+                (int)mX + half_w + radius,
+                (int)mY + half_h + radius
+        );
     }
 
     void draw(Canvas c) {

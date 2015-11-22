@@ -139,6 +139,12 @@ public class GameView extends SurfaceView
                 doDraw(c);
                 mHolder.unlockCanvasAndPost(c);
                 mBall.move(mPaddle[0], mPaddle[1]);
+
+                if (mBall.getX() < 0 || mBall.getX() > mScreenW) {
+                    //ball is outside game area - create a new ball/game
+                    mBall = new Ball(mScreenW, mScreenH);
+                }
+
             }
         }
 
