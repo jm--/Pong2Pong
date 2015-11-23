@@ -18,16 +18,26 @@ public class Ball {
     private float mVx;
     /** y component of ball velocity */
     private float mVy;
+    /** screen height (x coordinate of bottom wall */
+    private float mScreenW;
     /** screen height (y coordinate of bottom wall */
-    private float mSreenH;
-
+    private float mScreenH;
 
     public Ball(float screenW, float screenH) {
-        mSreenH = screenH;
-        mX = screenW / 2;
-        mY = screenH / 2;
+        mScreenW = screenW;
+        mScreenH = screenH;
+        start();
+    }
 
-        double startAngle = 1;
+    /**
+     * Initialize or reset ball to start coordinates and start conditions.
+     */
+    public void start() {
+        // set location to middle of the screen
+        mX = mScreenW / 2;
+        mY = mScreenH / 2;
+
+        double startAngle = 1; //this could be random
         mVx = (float) (mSpeed * Math.cos(startAngle));
         mVy = (float) (mSpeed * Math.sin(startAngle));
     }
@@ -111,8 +121,8 @@ public class Ball {
             return;
         }
         // check if ball hits bottom wall
-        if (mY + mRadius >= mSreenH) {
-            mY = mSreenH -mRadius;
+        if (mY + mRadius >= mScreenH) {
+            mY = mScreenH -mRadius;
             mVy = -mVy;
             return;
         }

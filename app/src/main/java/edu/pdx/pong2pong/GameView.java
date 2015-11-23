@@ -5,14 +5,12 @@ package edu.pdx.pong2pong;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Paint;
+import android.graphics.Color;
 import android.os.Handler;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.view.View;
 
 public class GameView extends SurfaceView
         implements SurfaceHolder.Callback {
@@ -142,7 +140,7 @@ public class GameView extends SurfaceView
 
                 if (mBall.getX() < 0 || mBall.getX() > mScreenW) {
                     //ball is outside game area - create a new ball/game
-                    mBall = new Ball(mScreenW, mScreenH);
+                    mBall.start();
                 }
 
             }
@@ -150,7 +148,7 @@ public class GameView extends SurfaceView
 
 
         private void doDraw (Canvas c) {
-            c.drawARGB(255, 150, 150, 0); //background
+            c.drawColor(Color.LTGRAY); //background
             mBall.draw(c);
             mPaddle[0].draw(c);
             mPaddle[1].draw(c);
