@@ -6,6 +6,7 @@ package edu.pdx.pong2pong;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Paint;
 import android.os.Handler;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -26,6 +27,8 @@ public class GameView extends SurfaceView
 
     /** The thread that actually draws the animation */
     private final GameThread mThread;
+
+    private Paint paintText = new Paint();
 
     public GameView(Context context) {
         this(context, null);
@@ -48,6 +51,10 @@ public class GameView extends SurfaceView
         });
 
         setFocusable(true); // make sure we get key events
+
+        paintText.setStrokeWidth(1);
+        paintText.setStyle(Paint.Style.FILL);
+        paintText.setTextSize(30);
     }
 
 
@@ -107,6 +114,7 @@ public class GameView extends SurfaceView
     }
 
 
+
     /**
      *
      */
@@ -121,6 +129,11 @@ public class GameView extends SurfaceView
         /** Handle to the application context, used to e.g. fetch Drawables. */
         private Context mContext;
 
+        /** delta time (ms): one iteration of the main processing loop in run() */
+        private long mDt;
+
+
+
         public GameThread(final SurfaceHolder holder,
                            final Context context,
                            final Handler handler) {
@@ -128,11 +141,19 @@ public class GameView extends SurfaceView
             mHolder = holder;
             mContext = context;
             mHandler = handler;
+
+
         }
 
         @Override
         public void run() {
+            long timeEnd = System.currentTimeMillis();
             while (true) {
+                long timeStart = System.currentTimeMillis();
+                //time between frames; adding 1 guarantees that value is never 0
+                mDt = timeStart - timeEnd + 1;
+                timeEnd = timeStart;
+
                 Canvas c = mHolder.lockCanvas();
                 doDraw(c);
                 mHolder.unlockCanvasAndPost(c);
@@ -147,8 +168,11 @@ public class GameView extends SurfaceView
         }
 
 
-        private void doDraw (Canvas c) {
+        private void doDraw(Canvas c) {
             c.drawColor(Color.LTGRAY); //background
+            c.drawText("time between frames (ms): " + mDt, 10, 60, paintText);
+            int fps = (int) (1000 / mDt);
+            c.drawText("frames per second: " + fps, 10, 100, paintText);
             mBall.draw(c);
             mPaddle[0].draw(c);
             mPaddle[1].draw(c);
