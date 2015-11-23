@@ -129,8 +129,8 @@ public class GameView extends SurfaceView
         /** Handle to the application context, used to e.g. fetch Drawables. */
         private Context mContext;
 
-        /** delta time (ms): one iteration of the main processing loop in run() */
-        private long mDt;
+        /** time (ms) between frames; one iteration of the main processing loop in run() */
+        private int mDt;
 
 
 
@@ -151,13 +151,13 @@ public class GameView extends SurfaceView
             while (true) {
                 long timeStart = System.currentTimeMillis();
                 //time between frames; adding 1 guarantees that value is never 0
-                mDt = timeStart - timeEnd + 1;
+                mDt = (int) (timeStart - timeEnd + 1);
                 timeEnd = timeStart;
 
                 Canvas c = mHolder.lockCanvas();
                 doDraw(c);
                 mHolder.unlockCanvasAndPost(c);
-                mBall.move(mPaddle[0], mPaddle[1]);
+                mBall.move(mPaddle[0], mPaddle[1], mDt);
 
                 if (mBall.getX() < 0 || mBall.getX() > mScreenW) {
                     //ball is outside game area - create a new ball/game
@@ -173,6 +173,8 @@ public class GameView extends SurfaceView
             c.drawText("time between frames (ms): " + mDt, 10, 60, paintText);
             int fps = (int) (1000 / mDt);
             c.drawText("frames per second: " + fps, 10, 100, paintText);
+            c.drawText("screen: " + mScreenW + "x" + mScreenH, 10, 140, paintText);
+            c.drawText("speed of ball: " + mBall.mSpeed, 10, 180, paintText);
             mBall.draw(c);
             mPaddle[0].draw(c);
             mPaddle[1].draw(c);
