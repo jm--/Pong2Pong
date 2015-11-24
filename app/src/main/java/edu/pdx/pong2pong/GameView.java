@@ -178,10 +178,15 @@ public class GameView extends SurfaceView
         return ip_addr1;
     }
 
+
+
+
     @Override
     public void run() {
         openNetwork();
+        setupResolution();
         long timeEnd = System.currentTimeMillis();
+        mBall.start();
 
         while (mRun) {
             long timeStart = System.currentTimeMillis();
@@ -209,6 +214,37 @@ public class GameView extends SurfaceView
             }
         }
         closeNetwork();
+    }
+
+    /**
+     * Exchange screen resolution.
+     */
+    private void setupResolution() {
+        try {
+            //send own resolution
+            mOutStream.writeInt(mScreenW);
+            mOutStream.writeInt(mScreenH);
+            //read resolution of other device
+            int x = mInStream.readInt();
+            int y = mInStream.readInt();
+
+            if (x < mScreenW) {
+                mScreenW = x;
+            }
+            if (y < mScreenH) {
+                mScreenH = y;
+            }
+
+            //update to actual values used
+            mBall.mScreenW = mScreenW;
+            mBall.mScreenH = mScreenH;
+            mLeftPaddle.setCoord(20, mScreenH / 2);
+            mRightPaddle.setCoord(mScreenW - 20, mScreenH / 2);
+
+        } catch(IOException e) {
+            Log.d(TAG_ERROR, "read/write error setupResolution: " + e);
+            mRun = false;
+        }
     }
 
     /**

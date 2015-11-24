@@ -19,9 +19,9 @@ public class Ball {
     /** y component of ball velocity */
     private float mVy;
     /** screen height (x coordinate of bottom wall */
-    private int mScreenW;
+    int mScreenW;
     /** screen height (y coordinate of bottom wall */
-    private int mScreenH;
+    int mScreenH;
 
     public Ball(int screenW, int screenH) {
         mScreenW = screenW;
