@@ -27,10 +27,22 @@ public class Paddle {
         mY = y;
     }
 
+    public int getX() {
+        return (int) mX;
+    }
+
+    public int getY() {
+        return (int) mY;
+    }
+
     public void setY(float y) {
         mY = y;
     }
 
+    public void setCoord(int x, int y) {
+        mX = x;
+        mY = y;
+    }
     /**
      * If the center of the ball is inside this rect area, then the ball is hitting this paddle.
      * @param radius the radius of the ball

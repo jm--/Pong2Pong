@@ -9,18 +9,40 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.Enumeration;
+
 public class GameView extends SurfaceView
         implements SurfaceHolder.Callback, Runnable {
 
+    private static String TAG_ERROR = "PONGLOG_ERROR_GameView";
+    private static String TAG_MSG = "PONGLOG_MSG_GameView";
+
+    /** the Pong ball */
     Ball mBall;
-    Paddle[] mPaddle;
+
+    /** the left paddle */
+    Paddle mLeftPaddle;
+
+    /** the right paddle */
+    Paddle mRightPaddle;
+
+    /** the paddle the user controls; either the left or the right paddle */
+    Paddle mMyPaddle;
 
     /** the width of the screen (max x) */
     int mScreenW;
@@ -38,13 +60,24 @@ public class GameView extends SurfaceView
     private boolean mRun = false;
 
     /** Lock to sync access to mRun */
-    private final Object mRunLock = new Object();
+    //private final Object mRunLock = new Object();
 
     /** Handle to the surface manager object we interact with */
     private SurfaceHolder mHolder;
 
+    private Context mContext;
+
     /** time (ms) between frames; one iteration of the main processing loop in run() */
     private int mDt;
+
+    /** comma separated list of local IP addresses */
+    private String mIpAddress;
+
+    private DataInputStream mInStream;
+    private DataOutputStream mOutStream;
+
+    private Socket mSocket = null;
+    private ServerSocket mServerSocket = null;
 
     public GameView(Context context) {
         this(context, null);
@@ -52,6 +85,8 @@ public class GameView extends SurfaceView
 
     public GameView(final Context context, final AttributeSet attrs) {
         super(context, attrs);
+
+        mContext = context;
 
         // register our interest in hearing about changes to our surface
         mHolder = getHolder();
@@ -62,7 +97,10 @@ public class GameView extends SurfaceView
         paintText.setStrokeWidth(1);
         paintText.setStyle(Paint.Style.FILL);
         paintText.setTextSize(30);
+
+        mIpAddress = getIpAddresses();
     }
+
 
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
@@ -78,10 +116,8 @@ public class GameView extends SurfaceView
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
         mBall = new Ball(mScreenW, mScreenH);
-        mPaddle = new Paddle[] {
-                new Paddle(20, mScreenH / 2),
-                new Paddle(mScreenW - 20, mScreenH / 2)
-        };
+        mLeftPaddle = new Paddle(20, mScreenH / 2);
+        mRightPaddle = new Paddle(mScreenW - 20, mScreenH / 2);
         mRun = true;
         mThread = new Thread(this);
         mThread.start();
@@ -123,21 +159,30 @@ public class GameView extends SurfaceView
     public boolean onTouchEvent(MotionEvent event) {
         //super.onTouchEvent(event);
 
-        float x = event.getX();
         float y = event.getY();
-        if (x < mScreenW / 2) {
-            //left paddle
-            mPaddle[0].setY(y);
-        } else {
-            //right paddle
-            mPaddle[1].setY(y);
-        }
+        mMyPaddle.setY(y);
         return true;
+    }
+
+    /**
+     * Two IP addresses are hard-coded in strings.xml. The IP of the device this program
+     * runs on and the IP address of the other device.
+     * @return the IP of the other device
+     */
+    private String getOtherIp() {
+        String ip_addr1 = getResources().getString(R.string.ip_addr1);
+        String ip_addr2 = getResources().getString(R.string.ip_addr2);
+        if (mIpAddress.contains(ip_addr1)) {
+            return ip_addr2;
+        }
+        return ip_addr1;
     }
 
     @Override
     public void run() {
+        openNetwork();
         long timeEnd = System.currentTimeMillis();
+
         while (mRun) {
             long timeStart = System.currentTimeMillis();
             //time between frames; adding 1 guarantees that value is never 0
@@ -150,14 +195,68 @@ public class GameView extends SurfaceView
                 mHolder.unlockCanvasAndPost(c);
             }
 
-            mBall.move(mPaddle[0], mPaddle[1], mDt);
+            if (isServer()) {
+                //the server program controls the ball
+                mBall.move(mLeftPaddle, mRightPaddle, mDt);
 
-            if (mBall.getX() < 0 || mBall.getX() > mScreenW) {
-                //ball is outside game area - create a new ball/game
-                mBall.start();
+                if (mBall.getX() < 0 || mBall.getX() > mScreenW) {
+                    //ball is outside game area - create a new ball/game
+                    mBall.start();
+                }
+                sendReceiveServer();
+            } else {
+                networkClient();
             }
         }
+        closeNetwork();
     }
+
+    /**
+     * The network code that runs on the server program.
+     */
+    private void sendReceiveServer() {
+        try {
+            //send ball coordinates
+            mOutStream.writeInt(mBall.getX());
+            mOutStream.writeInt(mBall.getY());
+            //send coordinates of right paddle
+            mOutStream.writeInt(mRightPaddle.getX());
+            mOutStream.writeInt(mRightPaddle.getY());
+            mOutStream.flush();
+            //read coordinates of left paddle
+            int x = mInStream.readInt();
+            int y = mInStream.readInt();
+            mLeftPaddle.setCoord(x, y);
+
+        } catch(IOException e) {
+            Log.d(TAG_ERROR, "read/write error (server): " + e);
+            mRun = false;
+        }
+    }
+
+    /**
+     * The network code that runs on the client program.
+     */
+    private void networkClient() {
+        try {
+            //read coordinates of ball
+            int x = mInStream.readInt();
+            int y = mInStream.readInt();
+            mBall.setCoord(x, y);
+            //read coordinates of right paddle
+            x = mInStream.readInt();
+            y = mInStream.readInt();
+            mRightPaddle.setCoord(x, y);
+            //send coordinates of left paddle
+            mOutStream.writeInt(mLeftPaddle.getX());
+            mOutStream.writeInt(mLeftPaddle.getY());
+            mOutStream.flush();
+        } catch(IOException e) {
+            Log.d(TAG_ERROR, "read/write error (client): " + e);
+            mRun = false;
+        }
+    }
+
 
     /**
      * Draw ball, paddles, and everything else to canvas.
@@ -170,8 +269,115 @@ public class GameView extends SurfaceView
         c.drawText("frames per second: " + fps, 10, 100, paintText);
         c.drawText("screen: " + mScreenW + "x" + mScreenH, 10, 140, paintText);
         c.drawText("speed of ball: " + mBall.mSpeed, 10, 180, paintText);
+        c.drawText("IP addresses: " + mIpAddress + "(" + (isServer() ? "server":"client") + ")", 10, 220, paintText);
+
         mBall.draw(c);
-        mPaddle[0].draw(c);
-        mPaddle[1].draw(c);
+        mLeftPaddle.draw(c);
+        mRightPaddle.draw(c);
     }
+
+
+    /**
+     * @return a comma separated list of IP addresses found on local device
+     */
+    private String getIpAddresses() {
+        String ip = "";
+        try {
+            Enumeration<NetworkInterface> ifaces = NetworkInterface.getNetworkInterfaces();
+            while (ifaces.hasMoreElements()) {
+                NetworkInterface iface = ifaces.nextElement();
+                Enumeration<InetAddress> addresses = iface.getInetAddresses();
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+
+                    if (addr.isSiteLocalAddress()) {
+                        if (ip != "") {
+                            ip += ", ";
+                        }
+                        ip += addr.getHostAddress();
+                    }
+                }
+            }
+
+        } catch (SocketException e) {
+            e.printStackTrace();
+            ip += "Something Wrong! " + e.toString() + "\n";
+        }
+
+        return ip;
+    }
+
+    /**
+     * Print msg to the screen.
+     * @param msg
+     */
+    private void drawText(String msg) {
+        Canvas c = mHolder.lockCanvas();
+        c.drawColor(Color.LTGRAY);
+        c.drawText(msg, 10, 60, paintText);
+        mHolder.unlockCanvasAndPost(c);
+    }
+
+    private void openNetwork() {
+        final int PORT = 8080;
+        try {
+            //try connect to server
+            mSocket = new Socket(getOtherIp(), PORT);
+            // if we get here, this program is the client
+            // the user on the client program controls the left paddle
+            mMyPaddle = mLeftPaddle;
+        } catch (UnknownHostException e) {
+            Log.d(TAG_ERROR, "connect error: hostname cannot be resolved: " + e);
+            mRun = false;
+            return;
+        } catch(IOException e) {
+            //connecting to server failed -> start own server
+            Log.d(TAG_MSG, "connect to server failed, starting server myself: " + e);
+            try {
+                drawText("Waiting for client. My IP addresses: " + mIpAddress);
+                mServerSocket = new ServerSocket(PORT);
+                mSocket = mServerSocket.accept();
+                // the user on the server program controls the right paddle
+                mMyPaddle = mRightPaddle;
+            } catch(IOException e2) {
+                Log.d(TAG_ERROR, "connect error:" + e);
+                mRun = false;
+            }
+        }
+        //indicate that latency is important
+        mSocket.setPerformancePreferences(0, 1, 0);
+        try {
+            mInStream =  new DataInputStream(mSocket.getInputStream());
+            mOutStream = new DataOutputStream(mSocket.getOutputStream());
+        } catch(IOException e) {
+            Log.d(TAG_ERROR, "error opening streams:" + e);
+            mRun = false;
+        }
+    }
+
+    private void closeNetwork() {
+        try {
+            if (mSocket != null) {
+                mSocket.shutdownInput();
+                mSocket.shutdownOutput();
+                mSocket.close();
+            }
+            if (mServerSocket != null) {
+                mServerSocket.close();
+            }
+        } catch (IOException e) {
+            Log.d(TAG_ERROR, "network shutdown error:" + e);
+            e.printStackTrace();
+        }
+
+    }
+    /**
+     * This program is either running in server or client mode.
+     * @return true if running in server mode
+     */
+    private boolean isServer() {
+        // only server program has a server socket
+        return mServerSocket != null;
+    }
+
 }

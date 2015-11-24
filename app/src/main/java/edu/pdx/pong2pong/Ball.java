@@ -42,8 +42,16 @@ public class Ball {
         mVy = (float) (mSpeed * Math.sin(startAngle));
     }
 
-    public float getX() {
-        return mX;
+    public int getX() {
+        return (int) mX;
+    }
+    public int getY() {
+        return (int) mY;
+    }
+
+    public void setCoord(int x, int y) {
+        mX = x;
+        mY = y;
     }
 
     private final static Paint p = new Paint();

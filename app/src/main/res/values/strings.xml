@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">Pong2Pong</string>
+    <string name="ip_addr1">10.1.2.43</string>
+    <string name="ip_addr2">10.1.2.44</string>
 </resources>
