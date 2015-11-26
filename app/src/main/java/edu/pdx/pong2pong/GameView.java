@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -79,6 +80,18 @@ public class GameView extends SurfaceView
     private Socket mSocket = null;
     private ServerSocket mServerSocket = null;
 
+    /** the IP address of the device running in server mode */
+    private String mAddrServer;
+
+    /** true if the program is running in server mode; false if program runs in client mode */
+    private boolean mIsServer;
+
+    public GameView(Context context, boolean isServer, String addrServer) {
+        this(context, null);
+        mIsServer = isServer;
+        mAddrServer = addrServer;
+    }
+
     public GameView(Context context) {
         this(context, null);
     }
@@ -101,7 +114,6 @@ public class GameView extends SurfaceView
         mIpAddress = getIpAddresses();
     }
 
-
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
@@ -115,9 +127,6 @@ public class GameView extends SurfaceView
      */
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        mBall = new Ball(mScreenW, mScreenH);
-        mLeftPaddle = new Paddle(20, mScreenH / 2);
-        mRightPaddle = new Paddle(mScreenW - 20, mScreenH / 2);
         mRun = true;
         mThread = new Thread(this);
         mThread.start();
@@ -164,27 +173,18 @@ public class GameView extends SurfaceView
         return true;
     }
 
-    /**
-     * Two IP addresses are hard-coded in strings.xml. The IP of the device this program
-     * runs on and the IP address of the other device.
-     * @return the IP of the other device
-     */
-    private String getOtherIp() {
-        String ip_addr1 = getResources().getString(R.string.ip_addr1);
-        String ip_addr2 = getResources().getString(R.string.ip_addr2);
-        if (mIpAddress.contains(ip_addr1)) {
-            return ip_addr2;
-        }
-        return ip_addr1;
-    }
-
-
-
-
     @Override
     public void run() {
-        openNetwork();
-        setupResolution();
+        try {
+            openNetwork();
+            setupResolution();
+        } catch(Exception e) {
+            Log.d(TAG_ERROR, "Network error: " + e);
+            e.printStackTrace();
+            drawText("Network error: " + e);
+            //Toast.makeText(mContext, "Network Error", Toast.LENGTH_SHORT).show();
+            return;
+        }
         long timeEnd = System.currentTimeMillis();
         mBall.start();
 
@@ -219,32 +219,25 @@ public class GameView extends SurfaceView
     /**
      * Exchange screen resolution.
      */
-    private void setupResolution() {
-        try {
-            //send own resolution
-            mOutStream.writeInt(mScreenW);
-            mOutStream.writeInt(mScreenH);
-            //read resolution of other device
-            int x = mInStream.readInt();
-            int y = mInStream.readInt();
+    private void setupResolution() throws IOException {
+        //send own resolution
+        mOutStream.writeInt(mScreenW);
+        mOutStream.writeInt(mScreenH);
+        //read resolution of other device
+        int x = mInStream.readInt();
+        int y = mInStream.readInt();
 
-            if (x < mScreenW) {
-                mScreenW = x;
-            }
-            if (y < mScreenH) {
-                mScreenH = y;
-            }
-
-            //update to actual values used
-            mBall.mScreenW = mScreenW;
-            mBall.mScreenH = mScreenH;
-            mLeftPaddle.setCoord(20, mScreenH / 2);
-            mRightPaddle.setCoord(mScreenW - 20, mScreenH / 2);
-
-        } catch(IOException e) {
-            Log.d(TAG_ERROR, "read/write error setupResolution: " + e);
-            mRun = false;
+        if (x < mScreenW) {
+            mScreenW = x;
         }
+        if (y < mScreenH) {
+            mScreenH = y;
+        }
+
+        mBall = new Ball(mScreenW, mScreenH);
+        mLeftPaddle = new Paddle(20, mScreenH / 2);
+        mRightPaddle = new Paddle(mScreenW - 20, mScreenH / 2);
+        mMyPaddle = isServer() ? mRightPaddle : mLeftPaddle;
     }
 
     /**
@@ -349,46 +342,59 @@ public class GameView extends SurfaceView
      */
     private void drawText(String msg) {
         Canvas c = mHolder.lockCanvas();
+        if (c == null) {
+            return;
+        }
         c.drawColor(Color.LTGRAY);
         c.drawText(msg, 10, 60, paintText);
         mHolder.unlockCanvasAndPost(c);
     }
 
-    private void openNetwork() {
-        final int PORT = 8080;
+    private void sleep(long ms) {
         try {
-            //try connect to server
-            mSocket = new Socket(getOtherIp(), PORT);
-            // if we get here, this program is the client
-            // the user on the client program controls the left paddle
-            mMyPaddle = mLeftPaddle;
-        } catch (UnknownHostException e) {
-            Log.d(TAG_ERROR, "connect error: hostname cannot be resolved: " + e);
-            mRun = false;
-            return;
-        } catch(IOException e) {
-            //connecting to server failed -> start own server
-            Log.d(TAG_MSG, "connect to server failed, starting server myself: " + e);
+            Thread.sleep(ms);
+        } catch (InterruptedException e) {}
+    }
+
+    private void openServerSocket(int port) throws IOException {
+        drawText("My IP: " + mIpAddress + " Waiting for client.");
+        mServerSocket = new ServerSocket(port);
+        mSocket = mServerSocket.accept();
+    }
+
+    private void openClientSocket(int port) {
+        String dots = ""; //a visual indicator; number of dots is number of connect attempts
+
+        while (mSocket == null) {
             try {
-                drawText("Waiting for client. My IP addresses: " + mIpAddress);
-                mServerSocket = new ServerSocket(PORT);
-                mSocket = mServerSocket.accept();
-                // the user on the server program controls the right paddle
-                mMyPaddle = mRightPaddle;
-            } catch(IOException e2) {
-                Log.d(TAG_ERROR, "connect error:" + e);
-                mRun = false;
+                //try connect to server
+                drawText("Connecting to " + mAddrServer + "." + dots);
+                sleep(1000);
+                mSocket = new Socket(mAddrServer, port);
+            } catch (UnknownHostException e) {
+                Log.d(TAG_ERROR, "connect error: hostname cannot be resolved: " + e);
+            } catch (IOException e) {
+                Log.d(TAG_ERROR, "connect error (client): " + e);
             }
+            dots += ".";
         }
+    }
+
+    private void openNetwork() throws IOException {
+        final int PORT = 8080;
+
+        mSocket = null;
+        if (isServer()) {
+            openServerSocket(PORT);
+        } else {
+            openClientSocket(PORT);
+        }
+
         //indicate that latency is important
         mSocket.setPerformancePreferences(0, 1, 0);
-        try {
-            mInStream =  new DataInputStream(mSocket.getInputStream());
-            mOutStream = new DataOutputStream(mSocket.getOutputStream());
-        } catch(IOException e) {
-            Log.d(TAG_ERROR, "error opening streams:" + e);
-            mRun = false;
-        }
+        //get streams
+        mInStream =  new DataInputStream(mSocket.getInputStream());
+        mOutStream = new DataOutputStream(mSocket.getOutputStream());
     }
 
     private void closeNetwork() {
@@ -405,15 +411,14 @@ public class GameView extends SurfaceView
             Log.d(TAG_ERROR, "network shutdown error:" + e);
             e.printStackTrace();
         }
-
     }
+
     /**
      * This program is either running in server or client mode.
      * @return true if running in server mode
      */
     private boolean isServer() {
-        // only server program has a server socket
-        return mServerSocket != null;
+        return mIsServer;
     }
 
 }

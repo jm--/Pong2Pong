@@ -7,6 +7,10 @@ import android.view.WindowManager;
 
 public class GameActivity extends AppCompatActivity {
 
+    public static String EXTRA_IP_SERVER = "EXTRA_IP_SERVER";
+    public static String EXTRA_IS_SERVER = "EXTRA_IS_SERVER";
+
+
     GameView mGameView;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -14,7 +18,11 @@ public class GameActivity extends AppCompatActivity {
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
-        mGameView = new GameView(this);
+
+        boolean isServer = getIntent().getBooleanExtra(EXTRA_IS_SERVER, true);
+        String addrServer = getIntent().getStringExtra(EXTRA_IP_SERVER);
+
+        mGameView = new GameView(this, isServer, addrServer);
         setContentView(mGameView);
      }
 }

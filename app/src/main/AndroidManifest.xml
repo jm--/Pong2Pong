@@ -37,7 +37,9 @@
         <activity
             android:name=".GameActivity"
             android:configChanges="orientation|keyboardHidden"
+            android:theme="@style/Base.Theme.AppCompat"
             android:screenOrientation="landscape" >
+
         </activity>
     </application>
 
