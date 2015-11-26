@@ -44,7 +44,7 @@ public class GameView extends SurfaceView
     Paddle mRightPaddle;
 
     /** the paddle the user controls; either the left or the right paddle */
-    Paddle mMyPaddle;
+    Paddle mMyPaddle = new Paddle(0,0);
 
     /** the width of the screen (max x) */
     int mScreenW;
@@ -87,6 +87,9 @@ public class GameView extends SurfaceView
     /** true if the program is running in server mode; false if program runs in client mode */
     private boolean mIsServer;
 
+    /** last reading from gravity sensor */
+    private float mSensorY;
+
     public GameView(Context context, boolean isServer, String addrServer) {
         super(context);
         mContext = context;
@@ -99,6 +102,9 @@ public class GameView extends SurfaceView
 
         // make sure we get key events
         setFocusable(true);
+
+        // keep screen on
+        setKeepScreenOn(true);
 
         //paint objects used for drawing text
         paintText.setStrokeWidth(1);
@@ -176,6 +182,14 @@ public class GameView extends SurfaceView
         float y = event.getY();
         mMyPaddle.setY(y);
         return true;
+    }
+
+    /**
+     * Gravity sensor change callback from activity.
+     */
+    public void setSensorY(float value) {
+        mSensorY = value;
+        mMyPaddle.setY(value * 100);
     }
 
     @Override
@@ -304,6 +318,7 @@ public class GameView extends SurfaceView
         c.drawText("screen: " + mScreenW + "x" + mScreenH, 10, 140, paintText);
         c.drawText("speed of ball: " + mBall.mSpeed, 10, 180, paintText);
         c.drawText("IP addresses: " + mIpAddress + "(" + (isServer() ? "server":"client") + ")", 10, 220, paintText);
+        c.drawText("sensorY: " + mSensorY, 10, 260, paintText);
 
         mBall.draw(c);
         mLeftPaddle.draw(c);
