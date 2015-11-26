@@ -6,6 +6,7 @@ package edu.pdx.pong2pong;
  */
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -87,31 +88,35 @@ public class GameView extends SurfaceView
     private boolean mIsServer;
 
     public GameView(Context context, boolean isServer, String addrServer) {
-        this(context, null);
+        super(context);
+        mContext = context;
         mIsServer = isServer;
         mAddrServer = addrServer;
-    }
-
-    public GameView(Context context) {
-        this(context, null);
-    }
-
-    public GameView(final Context context, final AttributeSet attrs) {
-        super(context, attrs);
-
-        mContext = context;
 
         // register our interest in hearing about changes to our surface
         mHolder = getHolder();
         mHolder.addCallback(this);
 
-        setFocusable(true); // make sure we get key events
+        // make sure we get key events
+        setFocusable(true);
 
+        //paint objects used for drawing text
         paintText.setStrokeWidth(1);
         paintText.setStyle(Paint.Style.FILL);
         paintText.setTextSize(30);
 
+        //get local IP addresses
         mIpAddress = getIpAddresses();
+
+        // there is no wifi-direct on emulators, so to test on emulators, start e.g. 2 emulators:
+        // "emulator -avd MY_AVD1 -shared-net-id 42"
+        // "emulator -avd MY_AVD2 -shared-net-id 43"
+        // this starts a virtual LAN with IPs 10.1.2.42 and 10.1.2.43
+        // R.string.test_server_addr needs to be one of the two IP addresses
+        if (mAddrServer == null || mAddrServer == "") {
+            mAddrServer = context.getResources().getString(R.string.test_server_addr);
+            mIsServer = mIpAddress.contains(mAddrServer);
+        }
     }
 
     @Override
