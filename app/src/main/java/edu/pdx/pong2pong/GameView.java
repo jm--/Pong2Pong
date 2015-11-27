@@ -189,7 +189,11 @@ public class GameView extends SurfaceView
      */
     public void setSensorY(float value) {
         mSensorY = value;
-        mMyPaddle.setY(value * 100);
+        final int middle = mScreenH / 2;
+        // The range of sensor values is between -9.8 and +9.8 (i.e. 1g), but let's use
+        // a lower value so that one is not required to tilt the device all the way (90 degree)
+        final int maxSensorValue = 4;
+        mMyPaddle.setY(middle + middle / maxSensorValue * value);
     }
 
     @Override
