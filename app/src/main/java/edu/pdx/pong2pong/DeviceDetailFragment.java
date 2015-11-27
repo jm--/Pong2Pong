@@ -28,6 +28,8 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import edu.pdx.pong2pong.DeviceListFragment.DeviceActionListener;
@@ -93,9 +95,11 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                     @Override
                     public void onClick(View v) {
                         // start Pong2Pong
+                        RadioButton btn = (RadioButton)mContentView.findViewById(R.id.inputmethod_acc);
                         Intent i = new Intent(getActivity(), GameActivity.class);
                         i.putExtra(GameActivity.EXTRA_IS_SERVER, info.isGroupOwner);
                         i.putExtra(GameActivity.EXTRA_IP_SERVER, info.groupOwnerAddress.getHostAddress());
+                        i.putExtra(GameActivity.EXTRA_USE_ACCELEROMETER, btn.isChecked());
                         startActivity(i);
                     }
                 });
@@ -126,6 +130,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
             mContentView.findViewById(R.id.btn_connect).setVisibility(View.GONE);
             // show the start game button
             mContentView.findViewById(R.id.btn_start_game).setVisibility(View.VISIBLE);
+            mContentView.findViewById(R.id.inputmethod_group).setVisibility(View.VISIBLE);
         }
     }
 
@@ -158,6 +163,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         view = (TextView) mContentView.findViewById(R.id.status_text);
         view.setText(R.string.empty);
         mContentView.findViewById(R.id.btn_start_game).setVisibility(View.GONE);
+        mContentView.findViewById(R.id.inputmethod_group).setVisibility(View.GONE);
         this.getView().setVisibility(View.GONE);
     }
 

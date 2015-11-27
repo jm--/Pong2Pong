@@ -33,6 +33,25 @@
                 android:text="@string/start_game_button"
                 android:visibility="gone" />
         </LinearLayout>
+        <RadioGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/inputmethod_group"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp">
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Touch Screen"
+                android:id="@+id/inputmethod_touch"
+                android:checked="false"/>
+            <RadioButton
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Accelerometer"
+                android:id="@+id/inputmethod_acc"
+                android:checked="true"/>
+        </RadioGroup>
         <TextView
             android:id="@+id/device_address"
             android:layout_width="match_parent"

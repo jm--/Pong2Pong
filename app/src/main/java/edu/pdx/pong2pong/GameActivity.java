@@ -14,12 +14,15 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
 
     public static String EXTRA_IP_SERVER = "EXTRA_IP_SERVER";
     public static String EXTRA_IS_SERVER = "EXTRA_IS_SERVER";
+    public static String EXTRA_USE_ACCELEROMETER = "EXTRA_USE_ACCELEROMETER";
 
     /** hardware sensor */
     private SensorManager mSm;
 
     /** game graphics and logic */
     private GameView mGameView;
+
+    private boolean mUseAcc;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,13 +32,19 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
 
-        //check if the accelerometer is present
-        mSm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        if (mSm.getSensorList(Sensor.TYPE_GRAVITY).size() != 0) {
-            //setup sensor
-            Sensor s = mSm.getSensorList(Sensor.TYPE_GRAVITY).get(0);
-            //register listener for sensor
-            mSm.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+
+        mUseAcc = getIntent().getBooleanExtra(EXTRA_USE_ACCELEROMETER, true);
+        if (mUseAcc) {
+            //check if the accelerometer is present
+            mSm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+            Sensor s = mSm.getDefaultSensor(Sensor.TYPE_GRAVITY);
+            if (s == null) {
+                //don't use accelerometer, as we don't have one
+                mUseAcc = false;
+            } else {
+                //register listener for sensor
+                mSm.registerListener(this, s, SensorManager.SENSOR_DELAY_GAME);
+            }
         }
 
         //get WifiDirect data
@@ -48,15 +57,19 @@ public class GameActivity extends AppCompatActivity implements SensorEventListen
     @Override
     protected void onResume() {
         super.onResume();
-        mSm.registerListener(this, mSm.getDefaultSensor(Sensor.TYPE_GRAVITY),
-                SensorManager.SENSOR_DELAY_GAME);
+        if (mUseAcc) {
+            mSm.registerListener(this, mSm.getDefaultSensor(Sensor.TYPE_GRAVITY),
+                    SensorManager.SENSOR_DELAY_GAME);
+        }
     }
 
     @Override
-    //unregister sensor listener to free up memory
     protected void onPause(){
-        mSm.unregisterListener(this);
         super.onPause();
+        if (mUseAcc) {
+            //unregister sensor listener to free up memory
+            mSm.unregisterListener(this);
+        }
     }
 
     @Override
