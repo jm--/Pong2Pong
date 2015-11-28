@@ -291,13 +291,11 @@ public class GameView extends SurfaceView
             mOutStream.writeInt(mBall.getX());
             mOutStream.writeInt(mBall.getY());
             //send coordinates of right paddle
-            mOutStream.writeInt(mRightPaddle.getX());
             mOutStream.writeInt(mRightPaddle.getY());
             mOutStream.flush();
             //read coordinates of left paddle
-            int x = mInStream.readInt();
             int y = mInStream.readInt();
-            mLeftPaddle.setCoord(x, y);
+            mLeftPaddle.setY(y);
 
         } catch(IOException e) {
             Log.d(TAG_ERROR, "read/write error (server): " + e);
@@ -315,11 +313,9 @@ public class GameView extends SurfaceView
             int y = mInStream.readInt();
             mBall.setCoord(x, y);
             //read coordinates of right paddle
-            x = mInStream.readInt();
             y = mInStream.readInt();
-            mRightPaddle.setCoord(x, y);
+            mRightPaddle.setY(y);
             //send coordinates of left paddle
-            mOutStream.writeInt(mLeftPaddle.getX());
             mOutStream.writeInt(mLeftPaddle.getY());
             mOutStream.flush();
         } catch(IOException e) {
