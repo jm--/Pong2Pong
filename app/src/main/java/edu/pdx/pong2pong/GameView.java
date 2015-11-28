@@ -6,16 +6,14 @@ package edu.pdx.pong2pong;
  */
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.util.AttributeSet;
+import android.graphics.Rect;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-import android.widget.Toast;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -55,8 +53,14 @@ public class GameView extends SurfaceView
     /** The thread that actually draws the animation */
     private Thread mThread;
 
-    /** Style and color information for text output */
-    private Paint paintText = new Paint();
+    /** Style and color information for debug text output */
+    private Paint mDebugText = new Paint();
+
+    /** Style and color information for the text used to print the current score */
+    private Paint mScoreText;
+
+    /** y location (in px) where the text for the current score is drawn */
+    private int mScoreTextY;
 
     /** Indicate whether the surface has been created & is ready to draw */
     private boolean mRun = false;
@@ -107,9 +111,9 @@ public class GameView extends SurfaceView
         setKeepScreenOn(true);
 
         //paint objects used for drawing text
-        paintText.setStrokeWidth(1);
-        paintText.setStyle(Paint.Style.FILL);
-        paintText.setTextSize(30);
+        mDebugText.setStrokeWidth(1);
+        mDebugText.setStyle(Paint.Style.FILL);
+        mDebugText.setTextSize(30);
 
         //get local IP addresses
         mIpAddress = getIpAddresses();
@@ -226,14 +230,18 @@ public class GameView extends SurfaceView
             if (isServer()) {
                 //the server program controls the ball
                 mBall.move(mLeftPaddle, mRightPaddle, mDt);
-
-                if (mBall.getX() < 0 || mBall.getX() > mScreenW) {
-                    //ball is outside game area - create a new ball/game
-                    mBall.start();
-                }
                 sendReceiveServer();
+
             } else {
                 networkClient();
+            }
+            //check if the ball is outside the game area
+            if (mBall.getX() < 0) {
+                mRightPaddle.incScore();
+                mBall.start();
+            } else if (mBall.getX() > mScreenW) {
+                mLeftPaddle.incScore();
+                mBall.start();
             }
         }
         closeNetwork();
@@ -261,6 +269,17 @@ public class GameView extends SurfaceView
         mLeftPaddle = new Paddle(20, mScreenH / 2);
         mRightPaddle = new Paddle(mScreenW - 20, mScreenH / 2);
         mMyPaddle = isServer() ? mRightPaddle : mLeftPaddle;
+
+        //init Paint object used for drawing the score text
+        mScoreText = new Paint();
+        mScoreText.setColor(Color.rgb(100, 100, 100));
+        mScoreText.setFakeBoldText(true);
+        mScoreText.setTextAlign(Paint.Align.CENTER);
+        mScoreText.setTextSize(mScreenH / 3);
+        Rect rec = new Rect();
+        mScoreText.getTextBounds("1234567890:", 0, 11, rec);
+        //the y position of where to draw the text
+        mScoreTextY = (mScreenH + Math.abs(rec.top)) / 2;
     }
 
     /**
@@ -316,13 +335,15 @@ public class GameView extends SurfaceView
      */
     private void doDraw(Canvas c) {
         c.drawColor(Color.LTGRAY); //background
-        c.drawText("time between frames (ms): " + mDt, 10, 60, paintText);
+        c.drawText("time between frames (ms): " + mDt, 10, 60, mDebugText);
         int fps = 1000 / mDt;
-        c.drawText("frames per second: " + fps, 10, 100, paintText);
-        c.drawText("screen: " + mScreenW + "x" + mScreenH, 10, 140, paintText);
-        c.drawText("speed of ball: " + mBall.mSpeed, 10, 180, paintText);
-        c.drawText("IP addresses: " + mIpAddress + "(" + (isServer() ? "server":"client") + ")", 10, 220, paintText);
-        c.drawText("sensorY: " + mSensorY, 10, 260, paintText);
+        c.drawText("frames per second: " + fps, 10, 100, mDebugText);
+        c.drawText("screen: " + mScreenW + "x" + mScreenH, 10, 140, mDebugText);
+        c.drawText("speed of ball: " + mBall.mSpeed, 10, 180, mDebugText);
+        c.drawText("IP addresses: " + mIpAddress + "(" + (isServer() ? "server" : "client") + ")", 10, 220, mDebugText);
+        c.drawText("sensorY: " + mSensorY, 10, 260, mDebugText);
+        String score = mLeftPaddle.getScore() + " : " + mRightPaddle.getScore();
+        c.drawText(score, mScreenW / 2, mScoreTextY, mScoreText);
 
         mBall.draw(c);
         mLeftPaddle.draw(c);
@@ -370,7 +391,7 @@ public class GameView extends SurfaceView
             return;
         }
         c.drawColor(Color.LTGRAY);
-        c.drawText(msg, 10, 60, paintText);
+        c.drawText(msg, 10, 60, mDebugText);
         mHolder.unlockCanvasAndPost(c);
     }
 

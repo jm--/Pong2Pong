@@ -9,7 +9,8 @@ public class Paddle {
     float mX;
     /** current y coordinate of the paddle center */
     float mY;
-
+    /** the number of won rounds (current score) */
+    int mNumWins;
 
     /** the width of the paddle */
     final static int w = 20;
@@ -25,6 +26,7 @@ public class Paddle {
     public Paddle(float x, float y) {
         mX = x;
         mY = y;
+        mNumWins = 0;
     }
 
     public int getX() {
@@ -43,6 +45,22 @@ public class Paddle {
         mX = x;
         mY = y;
     }
+
+    /**
+     * Get the current score.
+     * @return current score
+     */
+    public int getScore() {
+        return mNumWins;
+    }
+
+    /**
+     * Increase the score by one.
+     */
+    public void incScore() {
+        mNumWins++;
+    }
+
     /**
      * If the center of the ball is inside this rect area, then the ball is hitting this paddle.
      * @param radius the radius of the ball
