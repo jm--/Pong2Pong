@@ -431,6 +431,8 @@ public class GameView extends SurfaceView
             openClientSocket(PORT);
         }
 
+        //send data immediately; do not buffer
+        mSocket.setTcpNoDelay(true);
         //indicate that latency is important
         mSocket.setPerformancePreferences(0, 1, 0);
         //get streams
