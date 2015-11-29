@@ -109,7 +109,7 @@ public class Ball {
 
         // the paddle the ball is approaching
         Paddle paddle = mVx > 0 ? right : left;
-        Rect rec = paddle.getSpace(RADIUS);
+        Rect rec = paddle.getSpace();
         int halfPaddleH = rec.height() / 2;
 
         // check if ball hits paddle

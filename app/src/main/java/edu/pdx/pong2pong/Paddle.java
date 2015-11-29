@@ -6,21 +6,23 @@ import android.graphics.Rect;
 
 public class Paddle {
     /** current x coordinate of the paddle center */
-    float mX;
+    private float mX;
     /** current y coordinate of the paddle center */
-    float mY;
+    private float mY;
     /** the number of won rounds (current score) */
-    int mNumWins;
+    private int mNumWins;
     /** the width of the paddle */
     final static int WIDTH = 20;
     /** the height of the paddle */
     final static int HEIGHT = 100;
     /** half the width of the paddle */
-    final static int half_w = WIDTH / 2;
+    final private static int half_w = WIDTH / 2;
     /** half the width of the paddle */
-    final static int half_h = HEIGHT / 2;
-
+    final private static int half_h = HEIGHT / 2;
+    /** paint object used when drawing the ball */
     private final static Paint p = new Paint();
+    /** if the center of the ball (x,y) is inside this rect. area, then the ball hits the paddle */
+    private Rect mPaddleSpace = new Rect();
 
     public Paddle(float x, float y) {
         mX = x;
@@ -28,20 +30,11 @@ public class Paddle {
         mNumWins = 0;
     }
 
-    public int getX() {
-        return (int) mX;
-    }
-
     public int getY() {
         return (int) mY;
     }
 
     public void setY(float y) {
-        mY = y;
-    }
-
-    public void setCoord(int x, int y) {
-        mX = x;
         mY = y;
     }
 
@@ -62,17 +55,18 @@ public class Paddle {
 
     /**
      * If the center of the ball is inside this rect area, then the ball is hitting this paddle.
-     * @param radius the radius of the ball
      * @return
      */
-    public Rect getSpace(int radius) {
-        return new Rect(
-                (int)mX - half_w - radius,
-                (int)mY - half_h - radius,
-                (int)mX + half_w + radius,
-                (int)mY + half_h + radius
+    public Rect getSpace() {
+        mPaddleSpace.set(
+                (int)mX - half_w - Ball.RADIUS,
+                (int)mY - half_h - Ball.RADIUS,
+                (int)mX + half_w + Ball.RADIUS,
+                (int)mY + half_h + Ball.RADIUS
         );
+        return mPaddleSpace;
     }
+
 
     void draw(Canvas c) {
         c.drawRect(
