@@ -11,15 +11,14 @@ public class Paddle {
     float mY;
     /** the number of won rounds (current score) */
     int mNumWins;
-
     /** the width of the paddle */
-    final static int w = 20;
+    final static int WIDTH = 20;
     /** the height of the paddle */
-    final static int h = 200;
+    final static int HEIGHT = 100;
     /** half the width of the paddle */
-    final static int half_w = w / 2;
+    final static int half_w = WIDTH / 2;
     /** half the width of the paddle */
-    final static int half_h = h / 2;
+    final static int half_h = HEIGHT / 2;
 
     private final static Paint p = new Paint();
 
@@ -76,7 +75,11 @@ public class Paddle {
     }
 
     void draw(Canvas c) {
-        c.drawRect(mX - half_w, mY - half_h, mX + half_w, mY + half_h, p);
+        c.drawRect(
+                GameView.scaleX(mX - half_w),
+                GameView.scaleY(mY - half_h),
+                GameView.scaleX(mX + half_w),
+                GameView.scaleY(mY + half_h), p);
     }
 
 }

@@ -32,6 +32,9 @@ public class GameView extends SurfaceView
     private static String TAG_ERROR = "PONGLOG_ERROR_GameView";
     private static String TAG_MSG = "PONGLOG_MSG_GameView";
 
+    public static final int FIELD_X = 1000;
+    public static final int FIELD_Y = 500;
+
     /** the Pong ball */
     Ball mBall;
 
@@ -45,10 +48,10 @@ public class GameView extends SurfaceView
     Paddle mMyPaddle = new Paddle(0,0);
 
     /** the width of the screen (max x) */
-    int mScreenW;
+    static int mScreenW = 0;
 
     /** the height of the screen (max y) */
-    int mScreenH;
+    static int mScreenH = 0;
 
     /** The thread that actually draws the animation */
     private Thread mThread;
@@ -184,7 +187,7 @@ public class GameView extends SurfaceView
         //super.onTouchEvent(event);
 
         float y = event.getY();
-        mMyPaddle.setY(y);
+        mMyPaddle.setY(y * FIELD_Y / mScreenH);
         return true;
     }
 
@@ -193,7 +196,7 @@ public class GameView extends SurfaceView
      */
     public void setSensorY(float value) {
         mSensorY = value;
-        final int middle = mScreenH / 2;
+        final int middle = FIELD_Y / 2;
         // The range of sensor values is between -9.8 and +9.8 (i.e. 1g), but let's use
         // a lower value so that one is not required to tilt the device all the way (90 degree)
         final int maxSensorValue = 4;
@@ -204,7 +207,7 @@ public class GameView extends SurfaceView
     public void run() {
         try {
             openNetwork();
-            setupResolution();
+            setupGame();
         } catch(Exception e) {
             Log.d(TAG_ERROR, "Network error: " + e);
             e.printStackTrace();
@@ -239,7 +242,7 @@ public class GameView extends SurfaceView
             if (mBall.getX() < 0) {
                 mRightPaddle.incScore();
                 mBall.start();
-            } else if (mBall.getX() > mScreenW) {
+            } else if (mBall.getX() > FIELD_X) {
                 mLeftPaddle.incScore();
                 mBall.start();
             }
@@ -250,24 +253,10 @@ public class GameView extends SurfaceView
     /**
      * Exchange screen resolution.
      */
-    private void setupResolution() throws IOException {
-        //send own resolution
-        mOutStream.writeInt(mScreenW);
-        mOutStream.writeInt(mScreenH);
-        //read resolution of other device
-        int x = mInStream.readInt();
-        int y = mInStream.readInt();
-
-        if (x < mScreenW) {
-            mScreenW = x;
-        }
-        if (y < mScreenH) {
-            mScreenH = y;
-        }
-
-        mBall = new Ball(mScreenW, mScreenH);
-        mLeftPaddle = new Paddle(20, mScreenH / 2);
-        mRightPaddle = new Paddle(mScreenW - 20, mScreenH / 2);
+    private void setupGame() throws IOException {
+        mBall = new Ball();
+        mLeftPaddle = new Paddle(20 , FIELD_Y / 2);
+        mRightPaddle = new Paddle(FIELD_X - 20, FIELD_Y / 2);
         mMyPaddle = isServer() ? mRightPaddle : mLeftPaddle;
 
         //init Paint object used for drawing the score text
@@ -463,5 +452,14 @@ public class GameView extends SurfaceView
     private boolean isServer() {
         return mIsServer;
     }
+
+    public static float scaleX(float x) {
+        return x / FIELD_X * mScreenW;
+    }
+
+    public static float scaleY(float y) {
+        return y / FIELD_Y * mScreenH;
+    }
+
 
 }

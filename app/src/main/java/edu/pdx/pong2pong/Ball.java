@@ -3,29 +3,27 @@ package edu.pdx.pong2pong;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.util.Log;
 
 public class Ball {
-    /** x coordinate of center of ball */
+    /** the radius of the ball in virtual field coordinate system */
+    final static int RADIUS = 10;
+    /** x coordinate of center of ball (in field coordinate system */
     private float mX;
     /** y coordinate of center of ball */
     private float mY;
-    /** the radius of the ball */
-    private int mRadius = 20;
-    /** speed of the ball (in pixels per iteration) (should ideally be device dependent...) */
+    /** the radius of the ball in screen coordinate system */
+    private int mScreenRadius;
+    /** speed of the ball (in pixels per iteration) */
     int mSpeed = 30;
+    /** the maximum speed of the ball */
+    int mMaxSpeed = Paddle.WIDTH + 2 * RADIUS;
     /** x component of ball velocity */
     private float mVx;
     /** y component of ball velocity */
     private float mVy;
-    /** screen height (x coordinate of bottom wall */
-    int mScreenW;
-    /** screen height (y coordinate of bottom wall */
-    int mScreenH;
 
-    public Ball(int screenW, int screenH) {
-        mScreenW = screenW;
-        mScreenH = screenH;
+    public Ball() {
+        mScreenRadius = (int) GameView.scaleX(RADIUS);
         start();
     }
 
@@ -34,12 +32,12 @@ public class Ball {
      */
     public void start() {
         // set location to middle of the screen
-        mX = mScreenW / 2;
-        mY = mScreenH / 2;
+        mX = GameView.FIELD_X / 2;
+        mY = GameView.FIELD_Y / 2;
 
         double startAngle = 0; //this could be random
-        mVx = (float) (mSpeed * Math.cos(startAngle));
-        mVy = (float) (mSpeed * Math.sin(startAngle));
+        mVx = (float) Math.cos(startAngle);
+        mVy = (float) Math.sin(startAngle);
     }
 
     public int getX() {
@@ -57,9 +55,8 @@ public class Ball {
     private final static Paint p = new Paint();
 
     public void draw(Canvas c) {
-        c.drawCircle(mX, mY, mRadius, p);
+        c.drawCircle(GameView.scaleX(mX), GameView.scaleY(mY), mScreenRadius, p);
     }
-
 
 
     private final static double MAXBOUNCEANGLE = 5 * Math.PI / 12;
@@ -68,11 +65,15 @@ public class Ball {
 
         // adapt speed dynamically
         // speed [px / ms] to cross screen in one second is: screenW / 1000 [px / ms]
-        // assuming constant frame rate, then speed to cross screen in two seconds is:
-        mSpeed = mScreenW * dt / 2000;
-        if (mSpeed > left.w + 10) {
-            //verify speed is not much more than width of paddle, for ball could fly through paddle
-            mSpeed = left.w + 10;
+        // assuming constant frame rate, then speed to cross screen in 800 ms is:
+        mSpeed = GameView.FIELD_X * dt / 800;
+
+        if (mSpeed > mMaxSpeed && (mX < 100 || mX > GameView.FIELD_X - 100)) {
+            //when ball is close to paddle, cap speed because ball could fly through paddle
+            mSpeed = mMaxSpeed;
+        } else if (mSpeed > mMaxSpeed + mMaxSpeed) {
+            //cap speed of ball
+            mSpeed = mMaxSpeed + mMaxSpeed;
         }
 
         /*
@@ -108,7 +109,7 @@ public class Ball {
 
         // the paddle the ball is approaching
         Paddle paddle = mVx > 0 ? right : left;
-        Rect rec = paddle.getSpace(mRadius);
+        Rect rec = paddle.getSpace(RADIUS);
         int halfPaddleH = rec.height() / 2;
 
         // check if ball hits paddle
@@ -116,8 +117,9 @@ public class Ball {
             float intersectY = rec.top + halfPaddleH - mY;
             float normalized = intersectY / halfPaddleH;
             double bounceAngle = normalized * MAXBOUNCEANGLE;
-            mVx = (float) (mSpeed * Math.cos(bounceAngle));
-            mVy = (float) (mSpeed * -Math.sin(bounceAngle));
+            mVx = (float) (Math.cos(bounceAngle));
+            mVy = (float) (-Math.sin(bounceAngle));
+
             //Log.d("JM", "bounceangle " + bounceAngle + " vx:" + mVx + " vy:" + mVy);
             if (paddle == right) {
                 mVx = -mVx;
@@ -130,18 +132,18 @@ public class Ball {
         }
 
         // move ball one step
-        mX += mVx;
-        mY += mVy;
+        mX += mVx * mSpeed;
+        mY += mVy * mSpeed;
 
         // check if ball hits top wall
-        if (mY - mRadius <= 0) {
-            mY = mRadius;
+        if (mY - RADIUS <= 0) {
+            mY = RADIUS;
             mVy = -mVy;
             return;
         }
         // check if ball hits bottom wall
-        if (mY + mRadius >= mScreenH) {
-            mY = mScreenH -mRadius;
+        if (mY + RADIUS >= GameView.FIELD_Y) {
+            mY = GameView.FIELD_Y - RADIUS;
             mVy = -mVy;
             return;
         }
