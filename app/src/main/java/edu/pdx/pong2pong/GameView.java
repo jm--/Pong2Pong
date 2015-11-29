@@ -97,6 +97,8 @@ public class GameView extends SurfaceView
     /** last reading from gravity sensor */
     private float mSensorY;
 
+    private boolean mIsDebug = false;
+
     public GameView(Context context, boolean isServer, String addrServer) {
         super(context);
         mContext = context;
@@ -188,6 +190,7 @@ public class GameView extends SurfaceView
 
         float y = event.getY();
         mMyPaddle.setY(y * FIELD_Y / mScreenH);
+
         return true;
     }
 
@@ -320,13 +323,15 @@ public class GameView extends SurfaceView
      */
     private void doDraw(Canvas c) {
         c.drawColor(Color.LTGRAY); //background
-        c.drawText("time between frames (ms): " + mDt, 10, 60, mDebugText);
-        int fps = 1000 / mDt;
-        c.drawText("frames per second: " + fps, 10, 100, mDebugText);
-        c.drawText("screen: " + mScreenW + "x" + mScreenH, 10, 140, mDebugText);
-        c.drawText("speed of ball: " + mBall.mSpeed, 10, 180, mDebugText);
-        c.drawText("IP addresses: " + mIpAddress + "(" + (isServer() ? "server" : "client") + ")", 10, 220, mDebugText);
-        c.drawText("sensorY: " + mSensorY, 10, 260, mDebugText);
+        if (mIsDebug) {
+            c.drawText("time between frames (ms): " + mDt, 10, 60, mDebugText);
+            int fps = 1000 / mDt;
+            c.drawText("frames per second: " + fps, 10, 100, mDebugText);
+            c.drawText("screen: " + mScreenW + "x" + mScreenH, 10, 140, mDebugText);
+            c.drawText("speed of ball: " + mBall.mSpeed, 10, 180, mDebugText);
+            c.drawText("IP addresses: " + mIpAddress + "(" + (isServer() ? "server" : "client") + ")", 10, 220, mDebugText);
+            c.drawText("sensorY: " + mSensorY, 10, 260, mDebugText);
+        }
         String score = mLeftPaddle.getScore() + " : " + mRightPaddle.getScore();
         c.drawText(score, mScreenW / 2, mScoreTextY, mScoreText);
 
@@ -387,7 +392,7 @@ public class GameView extends SurfaceView
     }
 
     private void openServerSocket(int port) throws IOException {
-        drawText("My IP: " + mIpAddress + " Waiting for client.");
+        drawText("My IP: " + mIpAddress + "  Waiting for client.");
         mServerSocket = new ServerSocket(port);
         mSocket = mServerSocket.accept();
     }
