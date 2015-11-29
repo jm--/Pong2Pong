@@ -1,6 +1,7 @@
 package edu.pdx.pong2pong;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 
@@ -20,11 +21,12 @@ public class Paddle {
     /** half the width of the paddle */
     final private static int half_h = HEIGHT / 2;
     /** paint object used when drawing the ball */
-    private final static Paint p = new Paint();
+    private final Paint p = new Paint();
     /** if the center of the ball (x,y) is inside this rect. area, then the ball hits the paddle */
     private Rect mPaddleSpace = new Rect();
 
-    public Paddle(float x, float y) {
+    public Paddle(int color, float x, float y) {
+        p.setColor(color);
         mX = x;
         mY = y;
         mNumWins = 0;

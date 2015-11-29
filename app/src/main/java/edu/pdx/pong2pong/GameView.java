@@ -45,7 +45,7 @@ public class GameView extends SurfaceView
     Paddle mRightPaddle;
 
     /** the paddle the user controls; either the left or the right paddle */
-    Paddle mMyPaddle = new Paddle(0,0);
+    Paddle mMyPaddle = new Paddle(0, 0, 0);
 
     /** the width of the screen (max x) */
     static int mScreenW = 0;
@@ -255,8 +255,8 @@ public class GameView extends SurfaceView
      */
     private void setupGame() throws IOException {
         mBall = new Ball();
-        mLeftPaddle = new Paddle(20 , FIELD_Y / 2);
-        mRightPaddle = new Paddle(FIELD_X - 20, FIELD_Y / 2);
+        mLeftPaddle = new Paddle(Color.rgb(200, 0, 0), 20 , FIELD_Y / 2);
+        mRightPaddle = new Paddle(Color.rgb(0, 0, 200), FIELD_X - 20, FIELD_Y / 2);
         mMyPaddle = isServer() ? mRightPaddle : mLeftPaddle;
 
         //init Paint object used for drawing the score text
