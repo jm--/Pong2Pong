@@ -68,8 +68,8 @@ public class Ball {
 
         // adapt speed dynamically
         // speed [px / ms] to cross screen in one second is: screenW / 1000 [px / ms]
-        // assuming constant frame rate, then speed to cross screen in 800 ms is:
-        mSpeed = GameView.FIELD_X * dt / 800;
+        // assuming constant frame rate, then speed to cross screen in 1000 ms is:
+        mSpeed = GameView.FIELD_X * dt / 1000;
 
         if (mSpeed > mMaxSpeed && (mX < 100 || mX > GameView.FIELD_X - 100)) {
             //when ball is close to paddle, cap speed because ball could fly through paddle
