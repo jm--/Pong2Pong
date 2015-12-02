@@ -22,6 +22,9 @@ public class Ball {
     /** y component of ball velocity */
     private float mVy;
 
+    /** the number or rounds played (number of times start() was called) */
+    private int mRounds = 0;
+
     public Ball() {
         mScreenRadius = (int) GameView.scaleX(RADIUS);
         start();
@@ -35,7 +38,7 @@ public class Ball {
         mX = GameView.FIELD_X / 2;
         mY = GameView.FIELD_Y / 2;
 
-        double startAngle = 0; //this could be random
+        double startAngle = Math.PI * mRounds++;
         mVx = (float) Math.cos(startAngle);
         mVy = (float) Math.sin(startAngle);
     }
