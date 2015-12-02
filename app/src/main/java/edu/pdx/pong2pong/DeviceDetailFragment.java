@@ -112,6 +112,13 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
         }
+
+        //clear device info text
+        TextView v = (TextView) mContentView.findViewById(R.id.device_address);
+        v.setText("");
+        v = (TextView) mContentView.findViewById(R.id.device_info);
+        v.setText("");
+
         this.info = info;
         this.getView().setVisibility(View.VISIBLE);
 
