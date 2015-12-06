@@ -85,6 +85,7 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
         registerReceiver(receiver, intentFilter);
     }
 
+    /** unregister the BroadcastReceiver */
     @Override
     public void onPause() {
         super.onPause();
@@ -164,6 +165,10 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
         }
     }
 
+    /**
+     * Callback from device list fragment when a found device was clicked on.
+     * @param device the device that was clicked on
+     */
     @Override
     public void showDetails(WifiP2pDevice device) {
         DeviceDetailFragment fragment = (DeviceDetailFragment) getFragmentManager()
@@ -172,6 +177,10 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
 
     }
 
+    /**
+     * Callback from the detail fragment when the connect button was clicked.
+     * @param config the current p2p configuration
+     */
     @Override
     public void connect(WifiP2pConfig config) {
         manager.connect(channel, config, new ActionListener() {
@@ -189,6 +198,9 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
         });
     }
 
+    /**
+     * Callback from the detail fragment when the disconnect button was clicked.
+     */
     @Override
     public void disconnect() {
         final DeviceDetailFragment fragment = (DeviceDetailFragment) getFragmentManager()
@@ -210,6 +222,9 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
         });
     }
 
+    /**
+     * Callback when framework channel is lost.
+     */
     @Override
     public void onChannelDisconnected() {
         // we will try once more
@@ -220,19 +235,18 @@ public class WiFiDirectActivity extends Activity implements ChannelListener, Dev
             manager.initialize(this, getMainLooper(), this);
         } else {
             Toast.makeText(this,
-                    "Severe! Channel is probably lost premanently. Try Disable/Re-Enable P2P.",
+                    "Severe! Channel is probably lost permanently. Try Disable/Re-Enable P2P.",
                     Toast.LENGTH_LONG).show();
         }
     }
 
+    /**
+     * A cancel abort request by user. Disconnect i.e. removeGroup if
+     * already connected. Else, request WifiP2pManager to abort the ongoing
+     * request
+     */
     @Override
     public void cancelDisconnect() {
-
-        /*
-         * A cancel abort request by user. Disconnect i.e. removeGroup if
-         * already connected. Else, request WifiP2pManager to abort the ongoing
-         * request
-         */
         if (manager != null) {
             final DeviceListFragment fragment = (DeviceListFragment) getFragmentManager()
                     .findFragmentById(R.id.frag_list);

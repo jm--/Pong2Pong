@@ -47,6 +47,9 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
     View mContentView = null;
     private WifiP2pDevice device;
 
+    /**
+     * Setup the adapter for the peer devices list.
+     */
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
         super.onActivityCreated(savedInstanceState);
@@ -54,6 +57,9 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
 
     }
 
+    /**
+     *  Inflate the device list layout.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         mContentView = inflater.inflate(R.layout.device_list, null);
@@ -67,6 +73,9 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
         return device;
     }
 
+    /**
+     * Helper function to convert status values to strings.
+     */
     private static String getDeviceStatus(int deviceStatus) {
         Log.d(WiFiDirectActivity.TAG, "Peer status :" + deviceStatus);
         switch (deviceStatus) {
@@ -102,11 +111,7 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
 
         private List<WifiP2pDevice> items;
 
-        /**
-         * @param context
-         * @param textViewResourceId
-         * @param objects
-         */
+        /** construct a new adapter for handling the list of peer devices */
         public WiFiPeerListAdapter(Context context, int textViewResourceId,
                 List<WifiP2pDevice> objects) {
             super(context, textViewResourceId, objects);
@@ -114,6 +119,9 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
 
         }
 
+        /**
+         * Inflate the device list layout and reset UI.
+         */
         @Override
         public View getView(int position, View convertView, ViewGroup parent) {
             View v = convertView;
@@ -141,7 +149,6 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
 
     /**
      * Update UI for this device.
-     * 
      * @param device WifiP2pDevice object
      */
     public void updateThisDevice(WifiP2pDevice device) {
@@ -152,6 +159,10 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
         view.setText(getDeviceStatus(device.status));
     }
 
+    /**
+     * Callback when a list of peers is available.
+     * @param peerList the list of available peers
+     */
     @Override
     public void onPeersAvailable(WifiP2pDeviceList peerList) {
         if (progressDialog != null && progressDialog.isShowing()) {
@@ -167,13 +178,16 @@ public class DeviceListFragment extends ListFragment implements PeerListListener
 
     }
 
+    /**
+     * Clears the list of available peers.
+     */
     public void clearPeers() {
         peers.clear();
         ((WiFiPeerListAdapter) getListAdapter()).notifyDataSetChanged();
     }
 
     /**
-     * 
+     * The discovery option has been selected.
      */
     public void onInitiateDiscovery() {
         if (progressDialog != null && progressDialog.isShowing()) {

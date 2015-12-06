@@ -29,7 +29,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioButton;
-import android.widget.RadioGroup;
 import android.widget.TextView;
 
 import edu.pdx.pong2pong.DeviceListFragment.DeviceActionListener;
@@ -40,17 +39,14 @@ import edu.pdx.pong2pong.DeviceListFragment.DeviceActionListener;
  */
 public class DeviceDetailFragment extends Fragment implements ConnectionInfoListener {
 
-    protected static final int CHOOSE_FILE_RESULT_CODE = 20;
     private View mContentView = null;
     private WifiP2pDevice device;
     private WifiP2pInfo info;
     ProgressDialog progressDialog = null;
 
-    @Override
-    public void onActivityCreated(Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
-    }
-
+    /**
+     * Inflate the Detail fragment and setup the onclick callback functions for the buttons.
+     */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
@@ -67,16 +63,9 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
                 }
                 progressDialog = ProgressDialog.show(getActivity(), "Press back to cancel",
                         "Connecting to :" + device.deviceAddress, true, true
-//                        new DialogInterface.OnCancelListener() {
-//
-//                            @Override
-//                            public void onCancel(DialogInterface dialog) {
-//                                ((DeviceActionListener) getActivity()).cancelDisconnect();
-//                            }
-//                        }
+
                 );
                 ((DeviceActionListener) getActivity()).connect(config);
-
             }
         });
 
@@ -107,6 +96,10 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
         return mContentView;
     }
 
+    /**
+     * Callback when the connection information is available.
+     * @param info the information about the current connection
+     */
     @Override
     public void onConnectionInfoAvailable(final WifiP2pInfo info) {
         if (progressDialog != null && progressDialog.isShowing()) {
@@ -124,7 +117,7 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
         // The owner IP is now known.
         TextView view = (TextView) mContentView.findViewById(R.id.group_owner);
-        view.setText( info.isGroupOwner == true ?
+        view.setText(info.isGroupOwner == true ?
                 getResources().getString(R.string.server_paddle)
                 : getResources().getString(R.string.client_paddle));
 
@@ -139,7 +132,6 @@ public class DeviceDetailFragment extends Fragment implements ConnectionInfoList
 
     /**
      * Updates the UI with device data
-     * 
      * @param device the device to be displayed
      */
     public void showDetails(WifiP2pDevice device) {
